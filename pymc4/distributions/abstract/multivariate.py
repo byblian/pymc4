@@ -61,7 +61,7 @@ class Dirichlet(SimplexContinuousDistribution):
         super().__init__(name, a=a, **kwargs)
 
 
-class LKJ(ContinuousDistribution):
+class LKJCorr(ContinuousDistribution):
     r"""
     The LKJ (Lewandowski, Kurowicka and Joe) random variable.
 
@@ -93,6 +93,49 @@ class LKJ(ContinuousDistribution):
     ---------------
     Unlike PyMC3's implementation, the LKJ distribution in PyMC4 returns fully
     populated covariance matrices, rather than upper triangle matrices.
+
+    Parameter mappings to TensorFlow Probability are as follows:
+
+    - n: dimension
+    - eta: concentration
+    """
+
+    def __init__(self, name, n, eta, **kwargs):
+        super().__init__(name, n=n, eta=eta, **kwargs)
+
+
+class LKJCholeskyCov(ContinuousDistribution):
+    r"""
+    The LKJ (Lewandowski, Kurowicka and Joe) random variable.
+
+    The LKJ distribution is a prior distribution for correlation matrices.
+    If eta = 1 this corresponds to the uniform distribution over correlation
+    matrices. For eta -> oo the LKJ prior approaches the identity matrix.
+
+    ========  ==============================================
+    Support   Upper triangular matrix with values in [-1, 1]
+    ========  ==============================================
+
+    Parameters
+    ----------
+    n : int
+        Dimension of the covariance matrix (n > 1).
+    eta : float
+        The shape parameter (eta > 0) of the LKJ distribution. eta = 1
+        implies a uniform distribution of the correlation matrices;
+        larger values put more weight on matrices with few correlations.
+
+    References
+    ----------
+    .. [LKJ2009] Lewandowski, D., Kurowicka, D. and Joe, H. (2009).
+        "Generating random correlation matrices based on vines and
+        extended onion method." Journal of multivariate analysis,
+        100(9), pp.1989-2001.
+
+    Developer Notes
+    ---------------
+    Unlike PyMC3's implementation, the CholeskyLKJ distribution in PyMC4 returns fully
+    populated cholesky matrices, rather than upper triangle matrices.
 
     Parameter mappings to TensorFlow Probability are as follows:
 
@@ -180,18 +223,22 @@ class MvNormal(ContinuousDistribution):
 
     Developer Notes
     ---------------
-    ``MvNormal`` is based on TensorFlow Probability's
-    ``MutivariateNormalFullCovariance``, in which the full covariance matrix
-    must be specified.
+    ``MvNormal`` is based on TensorFlow Probability's multivariate
+    distributions:
+
+    - ``MutivariateNormalFullCovariance``, in which the full covariance matrix
+      is specified.
+    - ``MutivariateNormalTriL``, in which the cholesky matrix is specified.
 
     Parameter mappings to TensorFlow Probability are as follows:
 
     - mu: loc
     - cov: covariance_matrix
+    - chol: cholesky_matrix
     """
 
-    def __init__(self, name, mu, cov, **kwargs):
-        super().__init__(name, mu=mu, cov=cov, **kwargs)
+    def __init__(self, name, mu, cov=None, chol=None, **kwargs):
+        super().__init__(name, mu=mu, cov=cov, chol=chol, **kwargs)
 
 
 class VonMisesFisher(ContinuousDistribution):
